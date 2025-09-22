@@ -1,4 +1,6 @@
 import 'package:ahmadmahmodabomuch/view/Time%20Tracking.dart';
+import 'package:ahmadmahmodabomuch/view/WeeklySchedulePage.dart';
+import 'package:ahmadmahmodabomuch/view/WorkDaysPage.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -110,7 +112,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 subtitle: 'جدول العمل',
                                 color: const Color(0xFFff6b35),
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/schedule-table');
+                                  Navigator.push(
+                                      context,
+                                    MaterialPageRoute(builder: (context) => const WeeklySchedulePage()),
+                                  );
                                 },
                               ),
 
@@ -139,7 +144,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 subtitle: 'أيام العمل',
                                 color: const Color(0xFF17a2b8),
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/employee-schedule');
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder:(context) => const  WorkDaysPage()),
+                                  );
                                 },
                               ),
                             ],
