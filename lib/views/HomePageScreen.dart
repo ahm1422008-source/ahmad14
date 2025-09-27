@@ -1,7 +1,13 @@
-import 'package:ahmadmahmodabomuch/view/Time%20Tracking.dart';
-import 'package:ahmadmahmodabomuch/view/WeeklySchedulePage.dart';
-import 'package:ahmadmahmodabomuch/view/WorkDaysPage.dart';
+import'package:ahmadmahmodabomuch/views/WorkDaysPage.dart';
+//import 'package:ahmadmahmodabomuch/views/Time%20Tracking.dart';
+import 'package:ahmadmahmodabomuch/views/WeeklySchedulePage.dart';
+import 'package:ahmadmahmodabomuch/views/TimeTrackingScreen.dart';
+import 'package:ahmadmahmodabomuch/views/WeeklySchedulePage.dart';
+import 'package:ahmadmahmodabomuch/views/WorkDaysPage.dart';
 import 'package:flutter/material.dart';
+
+
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -281,11 +287,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 12),
                   const Text(
                     'MAIN WAREHOUSE',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 1,
