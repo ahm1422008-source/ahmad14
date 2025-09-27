@@ -1,11 +1,14 @@
 //import 'package:ahmadmahmodabomuch/view/home%20page.dart';
 //import 'package:ahmadmahmodabomuch/view/sign%20up.dart';
+import 'dart:io';
+
 import 'package:ahmadmahmodabomuch/views/HomePageScreen.dart';
 import 'package:ahmadmahmodabomuch/views/SignUpScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'ForgotPasswordScreen.dart';
+import 'Manager/utl.dart';
 
 
 
@@ -134,6 +137,11 @@ class _LoginPageState extends State<LoginPage>
     ));
 
     _animationController.forward();
+
+    // Check internet connection when page opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkConnection(context);
+    });
   }
 
   Future<void> _login() async {
@@ -196,6 +204,20 @@ class _LoginPageState extends State<LoginPage>
     }
     } else {
     HapticFeedback.mediumImpact();
+    }
+  }
+  checkConnection(BuildContext context) async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('connected to internet');
+        return 1;
+      }
+    } on SocketException catch (_) {
+      print('not connected to internet');
+      var utl = Utils();
+      await utl.showMyDialog(context, "אין אינטרנט", "האפליקציה דורשת חיבור לאינטרנט, נא להתחבר בבקשה");
+      return;
     }
   }
 

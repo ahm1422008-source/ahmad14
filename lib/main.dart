@@ -1,12 +1,23 @@
+import 'dart:io';
+
+import 'package:ahmadmahmodabomuch/views/Manager/utl.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MyApp());
 
+
+
 }
+
+
+
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
