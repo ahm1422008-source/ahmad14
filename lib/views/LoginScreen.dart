@@ -1,9 +1,7 @@
-//import 'package:ahmadmahmodabomuch/view/home%20page.dart';
-//import 'package:ahmadmahmodabomuch/view/sign%20up.dart';
 import 'dart:io';
-
 import 'package:ahmadmahmodabomuch/views/HomePageScreen.dart';
 import 'package:ahmadmahmodabomuch/views/SignUpScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,11 +10,7 @@ import 'Manager/utl.dart';
 
 
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
-}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -75,6 +69,9 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
+
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -95,6 +92,9 @@ class _LoginPageState extends State<LoginPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
+
+
+
 
   @override
   void initState() {
@@ -144,7 +144,13 @@ class _LoginPageState extends State<LoginPage>
     });
   }
 
+
+
+
+
   Future<void> _login() async {
+    addUser(name: "Adam", lastName: "lastName", email: "adam@example.com", password: "9444");
+
     FocusScope.of(context).unfocus();
 
     if (_formKey.currentState!.validate()) {
@@ -206,6 +212,33 @@ class _LoginPageState extends State<LoginPage>
     HapticFeedback.mediumImpact();
     }
   }
+
+
+
+
+
+  Future<void> addUser({
+    required String name,
+    required String lastName,
+    required String email,
+    required String password,
+
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').add({
+        'name': name,
+        'lastName': lastName,
+        'email': email,
+        'password': password,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ User added successfully!');
+    } catch (e) {
+      print('❌ Error adding user: $e');
+    }
+  }
+
+
   checkConnection(BuildContext context) async {
     try {
       final result = await InternetAddress.lookup('google.com');
@@ -220,6 +253,10 @@ class _LoginPageState extends State<LoginPage>
       return;
     }
   }
+
+
+
+
 
   Widget _buildSocialButton({
     required IconData icon,
@@ -247,6 +284,11 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
   }
+
+
+
+
+
 
   @override
   void dispose() {
