@@ -149,7 +149,6 @@ class _LoginPageState extends State<LoginPage>
 
 
   Future<void> _login() async {
-    addUser(name: "Adam", lastName: "lastName", email: "adam@example.com", password: "9444");
 
     FocusScope.of(context).unfocus();
 
@@ -217,26 +216,7 @@ class _LoginPageState extends State<LoginPage>
 
 
 
-  Future<void> addUser({
-    required String name,
-    required String lastName,
-    required String email,
-    required String password,
 
-  }) async {
-    try {
-      await FirebaseFirestore.instance.collection('users').add({
-        'name': name,
-        'lastName': lastName,
-        'email': email,
-        'password': password,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      print('✅ User added successfully!');
-    } catch (e) {
-      print('❌ Error adding user: $e');
-    }
-  }
 
 
   checkConnection(BuildContext context) async {

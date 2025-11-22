@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -136,6 +137,31 @@ class _SignUpPageState extends State<SignUpPage>
     return null;
   }
 
+
+  Future<void> addUser({
+    required String fullName,
+    required String phone,
+    required String email,
+    required String password,
+
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').add({
+        'fullName': fullName,
+        'phone': phone,
+        'email': email,
+        'password': password,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ User added successfully!');
+    } catch (e) {
+      print('❌ Error adding user: $e');
+    }
+  }
+
+
+
+
   Future<void> _signUp() async {
     FocusScope.of(context).unfocus();
 
@@ -149,6 +175,9 @@ class _SignUpPageState extends State<SignUpPage>
 
       if (mounted) {
         HapticFeedback.lightImpact();
+
+        addUser(fullName: _nameController.text, email: _emailController.text, phone: _phoneController.text, password: _passwordController.text);
+
 
         // عرض رسالة نجاح
         ScaffoldMessenger.of(context).showSnackBar(
