@@ -4,6 +4,7 @@ import 'package:ahmadmahmodabomuch/views/WeeklySchedulePage.dart';
 import 'package:ahmadmahmodabomuch/views/TimeTrackingScreen.dart';
 import 'package:ahmadmahmodabomuch/views/WeeklySchedulePage.dart';
 import 'package:ahmadmahmodabomuch/views/WorkDaysPage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 
@@ -20,6 +21,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  final _txtWareHouseName = TextEditingController();
+
+
+
+
+
+
 
   @override
   void initState() {
@@ -450,6 +458,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             style: TextStyle(color: Colors.white),
           ),
           content: TextField(
+            controller: _txtWareHouseName,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'اسم المخزن',
@@ -477,6 +486,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
               onPressed: () {
+
+                addWarehouse(warehouseName: _txtWareHouseName.text);
+
+
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -492,4 +505,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     );
   }
+
+  Future<void> addWarehouse({
+    required String warehouseName,
+
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('warehouses').add({
+        'warehouseName': warehouseName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print('✅ warehouse added successfully!');
+    } catch (e) {
+      print('❌ Error adding warehouse: $e');
+    }
+  }
+
 }
