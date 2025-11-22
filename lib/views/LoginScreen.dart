@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ForgotPasswordScreen.dart';
 import '../Utils/utils.dart';
 
@@ -148,71 +149,155 @@ class _LoginPageState extends State<LoginPage>
 
 
 
+  // Future<void> _login() async {
+  //
+  //   FocusScope.of(context).unfocus();
+  //
+  //   if (_formKey.currentState!.validate()) {
+  //     setState(() => _isLoading = true);
+  //
+  //     // محاكاة عملية تسجيل الدخول
+  //     await Future.delayed(const Duration(seconds: 2));
+  //
+  //     setState(() => _isLoading = false);
+  //
+  //     if (mounted) {
+  //       HapticFeedback.lightImpact();
+  //
+  //       // عرض رسالة نجاح
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Row(
+  //             children: [
+  //               const Icon(Icons.check_circle, color: Colors.white),
+  //               const SizedBox(width: 8),
+  //               Text('مرحباً بك ${_emailController.text}'),
+  //             ],
+  //           ),
+  //           backgroundColor: Colors.green,
+  //           behavior: SnackBarBehavior.floating,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(15),
+  //           ),
+  //           margin: const EdgeInsets.all(16),
+  //         ),
+  //       );
+  //
+  //       // الانتقال للصفحة الرئيسية مع تأثير انتقال جميل
+  //       await Future.delayed(const Duration(milliseconds: 500));
+  //
+  //       if (mounted) {
+  //         Navigator.pushReplacement(
+  //           context,
+  //           PageRouteBuilder(
+  //               pageBuilder: (context, animation, secondaryAnimation) => const HomePage(),
+  //           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //             const begin = Offset(1.0, 0.0);
+  //             const end = Offset.zero;
+  //             const curve = Curves.easeInOutCubic;
+  //             var tween = Tween(begin: begin, end: end).chain(
+  //               CurveTween(curve: curve),
+  //             );
+  //             return SlideTransition(
+  //               position: animation.drive(tween),
+  //               child: child,
+  //             );
+  //           },
+  //           transitionDuration: const Duration(milliseconds: 800),
+  //         ),
+  //   );
+  //   }
+  //   }
+  //   } else {
+  //   HapticFeedback.mediumImpact();
+  //   }
+  // }
+  //
+  //
+
+
+
+
+
   Future<void> _login() async {
-
-    FocusScope.of(context).unfocus();
-
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      if (!mounted) return;
       setState(() => _isLoading = true);
 
-      // محاكاة عملية تسجيل الدخول
-      await Future.delayed(const Duration(seconds: 2));
 
-      setState(() => _isLoading = false);
+      try {
+        // Query Firestore for a user with matching email and password
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: _emailController.text.trim())
+            .where('password', isEqualTo: _passwordController.text.trim())
+            .get();
 
-      if (mounted) {
-        HapticFeedback.lightImpact();
+        setState(() {
+          _isLoading = false;
+        });
+        if (querySnapshot.docs.isNotEmpty) {
+          // User found
+          final userDoc = querySnapshot.docs.first;
+          final userId = userDoc.id;
+          final userData = userDoc.data();
 
-        // عرض رسالة نجاح
+          // Here you would handle the actual login logic
+          print('Email: ${_emailController.text}');
+          print('Password: ${_passwordController.text}');
+          // Save user info locally
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('myUserID', userId);
+          await prefs.setString('myEmail', _emailController.text.trim());
+          await prefs.setString('myPassword', "123123");
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('התחברת בהצלחה!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('התחברת בהצלחה!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Navigate to main screen
+          // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainScreen()));
+          // Navigate to main screen and clear login route
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => HomePage()),
+                (route) => false,
+          );
+
+          print('Welcome ${userData['name'] ?? 'User'}');
+        } else {
+          // No user found with matching email and password
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid email or password!'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('مرحباً بك ${_emailController.text}'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
-
-        // الانتقال للصفحة الرئيسية مع تأثير انتقال جميل
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => const HomePage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              const begin = Offset(1.0, 0.0);
-              const end = Offset.zero;
-              const curve = Curves.easeInOutCubic;
-              var tween = Tween(begin: begin, end: end).chain(
-                CurveTween(curve: curve),
-              );
-              return SlideTransition(
-                position: animation.drive(tween),
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-    );
-    }
-    }
-    } else {
-    HapticFeedback.mediumImpact();
+        print('Error logging in: $e');
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
-
-
 
 
 
