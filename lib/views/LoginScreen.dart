@@ -8,6 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ForgotPasswordScreen.dart';
 import '../Utils/utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 
 
@@ -299,10 +303,141 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
+  // Helper method for social logins
+  Future<void> _handleSocialLoginSuccess(UserCredential userCredential) async {
+    if (userCredential.user == null) return;
+    
+    final user = userCredential.user!;
+    final userId = user.uid;
+    
+    // Check if user exists in Firestore
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      // Create new user record
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'name': user.displayName ?? 'User',
+        'email': user.email ?? '',
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
 
+    // Save user info locally
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('myUserID', userId);
+    await prefs.setString('myEmail', user.email ?? '');
+    await prefs.setString('myPassword', "");
 
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('התחברת בהצלחה!'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomePage()),
+          (route) => false,
+    );
+  }
 
+  Future<void> _signInWithGoogle() async {
+    try {
+      setState(() => _isLoading = true);
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // The user canceled the sign-in
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      await _handleSocialLoginSuccess(userCredential);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+      print('Error logging in with Google: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithFacebook() async {
+    try {
+      setState(() => _isLoading = true);
+      final LoginResult result = await FacebookAuth.instance.login();
+
+      if (result.status == LoginStatus.success) {
+        // Create a credential from the access token
+        final OAuthCredential credential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
+
+        // Once signed in, return the UserCredential
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+        await _handleSocialLoginSuccess(userCredential);
+      } else {
+        setState(() => _isLoading = false);
+        if (result.status == LoginStatus.failed && mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Facebook Login Failed: ${result.message}'), backgroundColor: Colors.red),
+           );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+      print('Error logging in with Facebook: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    try {
+      setState(() => _isLoading = true);
+      final AuthorizationCredentialAppleID result = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final OAuthCredential credential = OAuthProvider('apple.com').credential(
+        idToken: result.identityToken,
+        accessToken: result.authorizationCode,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      await _handleSocialLoginSuccess(userCredential);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+      print('Error logging in with Apple: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   checkConnection(BuildContext context) async {
     try {
@@ -639,38 +774,17 @@ class _LoginPageState extends State<LoginPage>
                                 _buildSocialButton(
                                   icon: Icons.g_mobiledata,
                                   color: const Color(0xFFDB4437),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('تسجيل الدخول بـ Google'),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
-                                  },
+                                  onPressed: _isLoading ? () {} : _signInWithGoogle,
                                 ),
                                 _buildSocialButton(
                                   icon: Icons.facebook,
                                   color: const Color(0xFF4267B2),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('تسجيل الدخول بـ Facebook'),
-                                        backgroundColor: Colors.blue,
-                                      ),
-                                    );
-                                  },
+                                  onPressed: _isLoading ? () {} : _signInWithFacebook,
                                 ),
                                 _buildSocialButton(
                                   icon: Icons.apple,
                                   color: Colors.white,
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('تسجيل الدخول بـ Apple'),
-                                        backgroundColor: Colors.grey,
-                                      ),
-                                    );
-                                  },
+                                  onPressed: _isLoading ? () {} : _signInWithApple,
                                 ),
                               ],
                             ),

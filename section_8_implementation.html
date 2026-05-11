@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>8 - مימוש הפרויקט</title>
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.8; margin: 50px; color: #2c3e50; }
+  h1  { color: #c0392b; font-size: 22pt; border-bottom: 2px solid #c0392b; padding-bottom: 5px; }
+  h2  { color: #2980b9; font-size: 16pt; margin-top: 30px; }
+  h3  { color: #27ae60; font-size: 14pt; margin-top: 22px; }
+  h4  { color: #8e44ad; font-size: 12pt; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 22px 0; font-size: 11pt; }
+  th  { background-color: #2980b9; color: white; padding: 9px 14px; text-align: right; border: 1px solid #bdc3c7; }
+  td  { padding: 8px 14px; border: 1px solid #bdc3c7; text-align: right; vertical-align: top; }
+  tr:nth-child(even) td { background-color: #eaf4fb; }
+  pre { background-color: #1e2d40; color: #a8d8ea; padding: 14px 18px; border-radius: 6px;
+        font-family: Consolas, monospace; font-size: 9.5pt; direction: ltr; text-align: left;
+        overflow-x: auto; margin: 10px 0; }
+  code { font-family: Consolas, monospace; background: #eaf4fb; padding: 1px 5px; border-radius: 3px; font-size: 10pt; }
+  .class-box { border: 2px solid #2980b9; border-radius: 10px; margin: 15px 0; overflow: hidden; }
+  .class-header { background: #2980b9; color: white; padding: 10px 16px; font-weight: bold; font-size: 13pt; }
+  .class-body { padding: 14px 18px; background: #fafafa; }
+  .flow-box { background: #1e2d40; color: #a8d8ea; padding: 16px 20px; border-radius: 8px;
+              font-family: Consolas, monospace; font-size: 9.5pt; direction: ltr; text-align: left; line-height: 1.8; margin: 12px 0; }
+  .note { background: #fef9e7; border-right: 4px solid #f39c12; padding: 10px 14px; border-radius: 4px; margin: 10px 0; }
+  hr { border: 1px solid #ecf0f1; margin: 28px 0; }
+</style>
+</head>
+<body>
+
+<h1>8 - מימוש הפרויקט (הקוד, בדיקות) &mdash; تنفيذ المشروع</h1>
+
+<div class="note">
+  <strong>ملاحظة عامة:</strong> يعتمد التطبيق على مبادئ البرمجة كائنية التوجه (OOP) بشكل كامل.
+  تم فصل المنطق البرمجي (Logic) عن الرسوميات (UI/Graphics) لتسهيل الصيانة والتطوير المستقبلي.
+</div>
+
+<hr>
+
+<!-- ============================= -->
+<!-- CLASS 1: WorkRequest          -->
+<!-- ============================= -->
+<h2>&#128218; المحلقות التي أنشأها الطالب (الكلاسات المُنشأة)</h2>
+
+<div class="class-box">
+  <div class="class-header">&#128203; 1. كلاس WorkRequest &mdash; نموذج بيانات الطلب (Data Model)</div>
+  <div class="class-body">
+
+    <h4>תפקיד המחלקה (تفقيد الكلاس):</h4>
+    <p>يمثل هذا الكلاس كائن طلب العمل الخاص بكل موظف. يحتوي على جميع المعلومات المتعلقة بطلب الجدول الأسبوعي.</p>
+
+    <h4>משתני מחלקה (متغيرات الكلاس):</h4>
+    <table>
+      <tr><th>اسم المتغير</th><th>النوع</th><th>تفقيد المتغير (الوصف)</th></tr>
+      <tr><td><code>id</code></td><td>String</td><td>معرف فريد لكل طلب (رقم تعريفي)</td></tr>
+      <tr><td><code>employeeName</code></td><td>String</td><td>اسم الموظف صاحب الطلب</td></tr>
+      <tr><td><code>employeeId</code></td><td>String</td><td>الرقم الوظيفي للموظف</td></tr>
+      <tr><td><code>workSchedule</code></td><td>Map&lt;String, bool&gt;</td><td>خريطة أيام العمل (true=يعمل، false=إجازة)</td></tr>
+      <tr><td><code>notes</code></td><td>String</td><td>ملاحظات الموظف للمدير</td></tr>
+      <tr><td><code>submittedAt</code></td><td>DateTime</td><td>تاريخ ووقت إرسال الطلب</td></tr>
+      <tr><td><code>status</code></td><td>WorkRequestStatus (Enum)</td><td>حالة الطلب: معلق / مقبول / مرفوض</td></tr>
+    </table>
+
+    <h4>الكود (הקוד):</h4>
+<pre>
+class WorkRequest {
+  final String id;
+  final String employeeName;
+  final String employeeId;
+  final Map&lt;String, bool&gt; workSchedule;
+  final String notes;
+  final DateTime submittedAt;
+  WorkRequestStatus status;
+
+  WorkRequest({
+    required this.id,
+    required this.employeeName,
+    required this.employeeId,
+    required this.workSchedule,
+    required this.notes,
+    required this.submittedAt,
+    this.status = WorkRequestStatus.pending,
+  });
+}
+
+enum WorkRequestStatus { pending, approved, rejected }
+</pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================= -->
+<!-- CLASS 2: WorkRequestManager   -->
+<!-- ============================= -->
+<div class="class-box">
+  <div class="class-header">&#9881;&#65039; 2. كلاس WorkRequestManager &mdash; مدير الطلبات (Singleton)</div>
+  <div class="class-body">
+
+    <h4>תפקיד המחלקה (تفقيد الكلاس):</h4>
+    <p>
+      الكلاس المسؤول عن إدارة وتخزين طلبات العمل في الذاكرة. يعتمد على نمط <strong>Singleton</strong> مما يضمن وجود نسخة واحدة فقط في جميع أنحاء التطبيق، مما يمنع تضارب البيانات.
+    </p>
+
+    <h4>משתני מחלקה (متغيرات الكلاس):</h4>
+    <table>
+      <tr><th>اسم المتغير</th><th>النوع</th><th>الوصف</th></tr>
+      <tr><td><code>_instance</code></td><td>WorkRequestManager (static)</td><td>النسخة الوحيدة الثابتة من الكلاس (Singleton pattern)</td></tr>
+      <tr><td><code>_requests</code></td><td>List&lt;WorkRequest&gt;</td><td>قائمة خاصة (private) تحتوي على جميع الطلبات المخزنة</td></tr>
+    </table>
+
+    <h4>פעולות מחלקה (دوال الكلاس والشرح):</h4>
+    <table>
+      <tr><th>اسم الدالة</th><th>المعاملات (Parameters)</th><th>الإرجاع (Return)</th><th>الشرح</th></tr>
+      <tr><td><code>addRequest()</code></td><td>WorkRequest request</td><td>void</td><td>تضيف طلباً جديداً لقائمة الطلبات</td></tr>
+      <tr><td><code>updateRequestStatus()</code></td><td>String id, WorkRequestStatus status</td><td>void</td><td>تغير حالة طلب موجود (موافقة أو رفض) بالبحث عن المعرف</td></tr>
+      <tr><td><code>removeRequest()</code></td><td>String id</td><td>void</td><td>تحذف طلباً محدداً من القائمة بناءً على معرفه</td></tr>
+      <tr><td><code>getPendingRequests()</code></td><td>-</td><td>List&lt;WorkRequest&gt;</td><td>ترجع قائمة الطلبات المعلقة (status = pending) فقط</td></tr>
+      <tr><td><code>getApprovedRequests()</code></td><td>-</td><td>List&lt;WorkRequest&gt;</td><td>ترجع قائمة الطلبات المعتمدة (status = approved) فقط</td></tr>
+    </table>
+
+    <h4>الكود (הקוד):</h4>
+<pre>
+class WorkRequestManager {
+  // Singleton Pattern: نسخة واحدة ثابتة
+  static final WorkRequestManager _instance = WorkRequestManager._internal();
+  factory WorkRequestManager() =&gt; _instance;
+  WorkRequestManager._internal();
+
+  // قائمة خاصة لا يمكن تعديلها من خارج الكلاس
+  final List&lt;WorkRequest&gt; _requests = [];
+
+  // إضافة طلب جديد
+  void addRequest(WorkRequest request) {
+    _requests.add(request);
+  }
+
+  // تحديث حالة الطلب (قبول / رفض)
+  void updateRequestStatus(String id, WorkRequestStatus status) {
+    final index = _requests.indexWhere((r) =&gt; r.id == id);
+    if (index != -1) {
+      _requests[index].status = status;
+    }
+  }
+
+  // حذف طلب
+  void removeRequest(String id) {
+    _requests.removeWhere((r) =&gt; r.id == id);
+  }
+
+  // جلب الطلبات المعلقة
+  List&lt;WorkRequest&gt; getPendingRequests() {
+    return _requests.where((r) =&gt; r.status == WorkRequestStatus.pending).toList();
+  }
+
+  // جلب الطلبات المعتمدة
+  List&lt;WorkRequest&gt; getApprovedRequests() {
+    return _requests.where((r) =&gt; r.status == WorkRequestStatus.approved).toList();
+  }
+}
+</pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================= -->
+<!-- CLASS 3: WorkDaysPage         -->
+<!-- ============================= -->
+<div class="class-box">
+  <div class="class-header">&#128203; 3. كلاس WorkDaysPage &mdash; صفحة تحديد أيام العمل (StatefulWidget)</div>
+  <div class="class-body">
+
+    <h4>תפקיד המחלקה (تفقيد الكلاس):</h4>
+    <p>واجهة المستخدم (UI) التي يستخدمها العامل لتحديد أيام عمله الأسبوعية وإضافة ملاحظات، ثم إرسال الطلب للمدير.</p>
+
+    <h4>משתני מחלקה (المتغيرات الرئيسية):</h4>
+    <table>
+      <tr><th>اسم المتغير</th><th>النوع</th><th>الوصف</th></tr>
+      <tr><td><code>workSchedule</code></td><td>Map&lt;String, bool&gt;</td><td>خريطة أيام الأسبوع مع قيمة بوليانية (عمل/إجازة)</td></tr>
+      <tr><td><code>selectedEmployeeName</code></td><td>String</td><td>اسم الموظف المُدخَل في الحقل النصي</td></tr>
+      <tr><td><code>savedNotes</code></td><td>String</td><td>الملاحظات المحفوظة من الموظف للمدير</td></tr>
+      <tr><td><code>_animationController</code></td><td>AnimationController</td><td>يتحكم في الحركة العامة للصفحة (fade + slide)</td></tr>
+      <tr><td><code>_pulseController</code></td><td>AnimationController</td><td>يتحكم في تأثير النبض (pulsing) للأيقونة</td></tr>
+    </table>
+
+    <h4>פעולות ראשיות (الدوال الرئيسية):</h4>
+    <table>
+      <tr><th>اسم الدالة</th><th>الشرح</th></tr>
+      <tr><td><code>_toggleWorkDay(dayName)</code></td><td>تعكس حالة اليوم (من إجازة إلى عمل والعكس) عند ضغط المستخدم عليه، مع تأثير اهتزاز (HapticFeedback)</td></tr>
+      <tr><td><code>_openNotesModal()</code></td><td>تفتح نافذة حوار (Dialog) لكتابة الملاحظات وحفظها</td></tr>
+      <tr><td><code>_saveSchedule()</code></td><td>تتحقق من صحة البيانات وتنشئ كائن WorkRequest جديد وتضيفه لـ WorkRequestManager وترسله للمدير</td></tr>
+    </table>
+
+    <h4>تدفق العملية الرئيسية <code>_saveSchedule()</code>:</h4>
+    <div class="flow-box">
+[User Presses Save Button]<br>
+      &darr;<br>
+[Check: is employeeName empty?]<br>
+  |-- YES --&gt; Show Error SnackBar [الرجاء إدخال اسم الموظف] --&gt; STOP<br>
+  |-- NO  --&gt; HapticFeedback (heavy impact)<br>
+                &darr;<br>
+         [Create WorkRequest object with all data]<br>
+                &darr;<br>
+         [WorkRequestManager().addRequest(newRequest)]<br>
+                &darr;<br>
+         [Show Success SnackBar "تم إرسال الطلب بنجاح"]<br>
+                &darr;<br>
+         [Navigate back to Home Page]
+    </div>
+
+    <h4>مقتطف الكود (הקוד):</h4>
+<pre>
+void _toggleWorkDay(String dayName) {
+  setState(() {
+    workSchedule[dayName] = !workSchedule[dayName]!;
+  });
+  HapticFeedback.selectionClick(); // تأثير اهتزاز لحظي
+}
+
+void _saveSchedule() {
+  if (selectedEmployeeName.isEmpty) {
+    _showErrorMessage('الرجاء إدخال اسم الموظف');
+    return;
+  }
+  HapticFeedback.heavyImpact();
+
+  // إنشاء طلب جديد وإرساله للمدير
+  final newRequest = WorkRequest(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    employeeName: selectedEmployeeName,
+    employeeId: 'EMP_${DateTime.now().millisecondsSinceEpoch}',
+    workSchedule: Map.from(workSchedule),
+    notes: savedNotes,
+    submittedAt: DateTime.now(),
+  );
+  WorkRequestManager().addRequest(newRequest);
+}
+</pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================= -->
+<!-- CLASS 4: HomePage             -->
+<!-- ============================= -->
+<div class="class-box">
+  <div class="class-header">&#127968; 4. كلاس HomePage &mdash; الشاشة الرئيسية (StatefulWidget)</div>
+  <div class="class-body">
+
+    <h4>תפקיד המחלקה (تفقيد الكلاس):</h4>
+    <p>الشاشة المركزية التي يصل إليها العامل بعد تسجيل الدخول، تحتوي على أزرار للتنقل إلى جميع شاشات التطبيق.</p>
+
+    <h4>פעולות (الدوال):</h4>
+    <table>
+      <tr><th>اسم الدالة</th><th>الشرح</th></tr>
+      <tr><td><code>_buildActionButton()</code></td><td>بناء أزرار التنقل الأربعة (Schedule Table, Time Tracking, Work Days, Manager List) مع تصميم موحد</td></tr>
+      <tr><td><code>_showAddWarehouseDialog()</code></td><td>تفتح نافذة حوار لإضافة اسم مخزن جديد</td></tr>
+      <tr><td><code>addWarehouse()</code></td><td>دالة غير متزامنة (async) تحفظ اسم المخزن في قاعدة بيانات Firestore</td></tr>
+    </table>
+
+    <h4>مقتطف كود الحفظ في Firebase:</h4>
+<pre>
+Future&lt;void&gt; addWarehouse({required String warehouseName}) async {
+  try {
+    await FirebaseFirestore.instance.collection('warehouses').add({
+      'warehouseName': warehouseName,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    print('Error adding warehouse: $e');
+  }
+}
+</pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ============================= -->
+<!-- LOGIC vs GRAPHICS             -->
+<!-- ============================= -->
+<h2>&#9878; الفصل بين المنطق والرسوميات (Logic vs Graphics)</h2>
+
+<table>
+  <tr>
+    <th>&#9881;&#65039; المنطق البرمجي (Logic)</th>
+    <th>&#127912; الرسوميات (Graphics / UI)</th>
+  </tr>
+  <tr>
+    <td><code>WorkRequestManager</code>: إدارة وتخزين الطلبات في الذاكرة</td>
+    <td><code>ManagerDashboard</code>: عرض الطلبات بشكل مرئي مع بطاقات وألوان</td>
+  </tr>
+  <tr>
+    <td><code>WorkRequest</code>: هيكل بيانات الطلب (Model)</td>
+    <td><code>WorkDaysPage</code>: واجهة تحديد الأيام مع أنيميشن وتأثيرات</td>
+  </tr>
+  <tr>
+    <td><code>addWarehouse()</code>: دالة الكتابة لقاعدة البيانات</td>
+    <td><code>HomePage</code>: شبكة الأزرار (GridView) مع التصميم والألوان</td>
+  </tr>
+  <tr>
+    <td>دوال الفلترة: <code>getPendingRequests()</code>, <code>getApprovedRequests()</code></td>
+    <td><code>AnimationController</code>: تحكم في جميع حركات الشاشة (fade, slide, pulse)</td>
+  </tr>
+</table>
+
+</body>
+</html>

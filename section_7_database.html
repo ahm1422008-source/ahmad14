@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>7 - قاعدة البيانات</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    line-height: 1.8;
+    margin: 50px;
+    color: #2c3e50;
+    background: #fff;
+  }
+  h1 { color: #c0392b; font-size: 22pt; border-bottom: 2px solid #c0392b; padding-bottom: 5px; }
+  h2 { color: #2980b9; font-size: 16pt; margin-top: 30px; }
+  h3 { color: #27ae60; font-size: 14pt; margin-top: 25px; }
+  p  { font-size: 12pt; }
+
+  /* الجدول الرئيسي */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 15px 0 25px 0;
+    font-size: 11pt;
+  }
+  th {
+    background-color: #2980b9;
+    color: white;
+    padding: 10px 14px;
+    text-align: right;
+    border: 1px solid #bdc3c7;
+  }
+  td {
+    padding: 9px 14px;
+    border: 1px solid #bdc3c7;
+    text-align: right;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background-color: #eaf4fb; }
+  tr:nth-child(odd)  td { background-color: #ffffff; }
+
+  /* الكود */
+  pre {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 10pt;
+    direction: ltr;
+    text-align: left;
+    overflow-x: auto;
+  }
+  code { font-family: Consolas, monospace; background: #eaf4fb; padding: 1px 4px; border-radius: 3px; }
+
+  /* بطاقة schema */
+  .schema-box {
+    background-color: #1e2d40;
+    color: #a8d8ea;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: Consolas, monospace;
+    font-size: 10pt;
+    direction: ltr;
+    text-align: left;
+    line-height: 1.7;
+    margin: 15px 0;
+  }
+  .note {
+    background-color: #fef9e7;
+    border-right: 4px solid #f39c12;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 12px 0;
+  }
+  hr { border: 1px solid #ecf0f1; margin: 30px 0; }
+</style>
+</head>
+<body>
+
+<h1>7 - בסיס נתונים &mdash; قاعدة البيانات (Database)</h1>
+
+<h2>شيטת השמירה הנבחרת (طريقة التخزين المختارة)</h2>
+<p>
+  تم اختيار <strong>Firebase Firestore</strong> كقاعدة بيانات للمشروع، وهي قاعدة بيانات NoSQL سحابية (Cloud) من Google.<br>
+  تتميز بما يلي:
+</p>
+<ul>
+  <li><strong>مزامنة فورية (Real-time sync):</strong> يستقبل التطبيق التغييرات فور حدوثها.</li>
+  <li><strong>مبنية على السحابة (Cloud-based):</strong> لا حاجة لخادم خاص، تدار بالكامل من Google.</li>
+  <li><strong>بنية مرنة (Document-Collection):</strong> تُخزَّن البيانات كـ Documents داخل Collections بدون جدول ثابت مسبقاً.</li>
+</ul>
+
+<hr>
+
+<!-- =============================== -->
+<!-- COLLECTION 1: users             -->
+<!-- =============================== -->
+<h2>ארגון הנתונים (تنظيم البيانات – الـ Collections)</h2>
+
+<h3>&#128193; 1. مجموعة المستخدمين &nbsp;<code>users</code></h3>
+<p>
+  تُخزَّن بيانات كل مستخدم في وثيقة (Document) معرّفها هو <code>UID</code> الخاص بـ Firebase Authentication.
+</p>
+
+<p><strong>مثال على وثيقة (Document Example):</strong></p>
+<pre>
+users/
+  └── UID_abc123xyz/
+        ├── name:        "Ahmad Mohammad"
+        ├── email:       "ahmad@example.com"
+        ├── role:        "employee"
+        └── created_at:  2024-01-15 10:30:00
+</pre>
+
+<p><strong>الحقول وأنواعها:</strong></p>
+<table>
+  <tr>
+    <th>اسم الحقل (Field Name)</th>
+    <th>النوع (Type)</th>
+    <th>الوصف (Description)</th>
+  </tr>
+  <tr>
+    <td><code>name</code></td>
+    <td>String</td>
+    <td>اسم المستخدم الكامل</td>
+  </tr>
+  <tr>
+    <td><code>email</code></td>
+    <td>String</td>
+    <td>البريد الإلكتروني للمستخدم</td>
+  </tr>
+  <tr>
+    <td><code>role</code></td>
+    <td>String</td>
+    <td>دور المستخدم: <code>employee</code> أو <code>manager</code></td>
+  </tr>
+  <tr>
+    <td><code>created_at</code></td>
+    <td>Timestamp</td>
+    <td>تاريخ ووقت إنشاء الحساب تلقائياً من الخادم</td>
+  </tr>
+</table>
+
+<p><strong>كود الكتابة لقاعدة البيانات (من LoginScreen.dart):</strong></p>
+<pre>
+await FirebaseFirestore.instance.collection('users').doc(userId).set({
+  'name': user.displayName ?? 'User',
+  'email': user.email ?? '',
+  'created_at': FieldValue.serverTimestamp(),
+});
+</pre>
+
+<hr>
+
+<!-- =============================== -->
+<!-- COLLECTION 2: work_schedules    -->
+<!-- =============================== -->
+<h3>&#128193; 2. مجموعة جداول العمل &nbsp;<code>work_schedules</code></h3>
+<p>تُخزَّن طلبات جداول العمل التي يرسلها الموظفون إلى المدير لطلب الموافقة أو الرفض.</p>
+
+<p><strong>مثال على وثيقة (Document Example):</strong></p>
+<pre>
+work_schedules/
+  └── REQUEST_001/
+        ├── employeeName:   "فاطمة علي"
+        ├── employeeId:     "EMP002"
+        ├── notes:          "متاحة للعمل يوم السبت حسب الحاجة"
+        ├── status:         "pending"
+        ├── submittedAt:    2024-01-15 09:00:00
+        └── workSchedule:
+              ├── الأحد:    true
+              ├── الإثنين:  true
+              ├── الثلاثاء: true
+              ├── الأربعاء: true
+              ├── الخميس:   true
+              ├── الجمعة:   false
+              └── السبت:    true
+</pre>
+
+<p><strong>الحقول وأنواعها:</strong></p>
+<table>
+  <tr>
+    <th>اسم الحقل (Field Name)</th>
+    <th>النوع (Type)</th>
+    <th>الوصف (Description)</th>
+  </tr>
+  <tr>
+    <td><code>employeeName</code></td>
+    <td>String</td>
+    <td>اسم الموظف</td>
+  </tr>
+  <tr>
+    <td><code>employeeId</code></td>
+    <td>String</td>
+    <td>الرقم الوظيفي للموظف</td>
+  </tr>
+  <tr>
+    <td><code>notes</code></td>
+    <td>String</td>
+    <td>ملاحظات إضافية من الموظف للمدير</td>
+  </tr>
+  <tr>
+    <td><code>status</code></td>
+    <td>String</td>
+    <td>حالة الطلب: <code>pending</code> / <code>approved</code> / <code>rejected</code></td>
+  </tr>
+  <tr>
+    <td><code>submittedAt</code></td>
+    <td>Timestamp</td>
+    <td>تاريخ ووقت إرسال الطلب</td>
+  </tr>
+  <tr>
+    <td><code>workSchedule</code></td>
+    <td>Map&lt;String, Boolean&gt;</td>
+    <td>خريطة بأيام الأسبوع (true = يوم عمل، false = إجازة)</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- =============================== -->
+<!-- COLLECTION 3: time_tracking     -->
+<!-- =============================== -->
+<h3>&#128193; 3. مجموعة تتبع الوقت &nbsp;<code>time_tracking</code></h3>
+<p>تُسجَّل فيها ساعات حضور وانصراف كل موظف يومياً.</p>
+
+<p><strong>مثال على وثيقة (Document Example):</strong></p>
+<pre>
+time_tracking/
+  └── TRACK_2024_EMP001/
+        ├── employeeId:   "EMP001"
+        ├── date:         "2024-01-15"
+        ├── checkIn:      "08:30:00"
+        └── checkOut:     "17:00:00"
+</pre>
+
+<p><strong>الحقول وأنواعها:</strong></p>
+<table>
+  <tr>
+    <th>اسم الحقل (Field Name)</th>
+    <th>النوع (Type)</th>
+    <th>الوصف (Description)</th>
+  </tr>
+  <tr>
+    <td><code>employeeId</code></td>
+    <td>String</td>
+    <td>الرقم الوظيفي للموظف</td>
+  </tr>
+  <tr>
+    <td><code>date</code></td>
+    <td>String</td>
+    <td>تاريخ يوم العمل</td>
+  </tr>
+  <tr>
+    <td><code>checkIn</code></td>
+    <td>String</td>
+    <td>وقت الحضور (تسجيل الدخول)</td>
+  </tr>
+  <tr>
+    <td><code>checkOut</code></td>
+    <td>String</td>
+    <td>وقت الانصراف (تسجيل الخروج)</td>
+  </tr>
+</table>
+
+<hr>
+
+<!-- =============================== -->
+<!-- SCHEMA OVERVIEW                 -->
+<!-- =============================== -->
+<h2>סכמה כללית (نظرة عامة على هيكل قاعدة البيانات)</h2>
+<div class="schema-box">
+Firebase Firestore<br>
+│<br>
+├── 📁 users<br>
+│   └── {uid}<br>
+│       ├── name:         String<br>
+│       ├── email:        String<br>
+│       ├── role:         String  (employee | manager)<br>
+│       └── created_at:   Timestamp<br>
+│<br>
+├── 📁 work_schedules<br>
+│   └── {requestId}<br>
+│       ├── employeeName: String<br>
+│       ├── employeeId:   String<br>
+│       ├── status:       String  (pending | approved | rejected)<br>
+│       ├── notes:        String<br>
+│       ├── submittedAt:  Timestamp<br>
+│       └── workSchedule: Map&lt;String, Boolean&gt;<br>
+│<br>
+└── 📁 time_tracking<br>
+    └── {trackId}<br>
+        ├── employeeId:   String<br>
+        ├── date:         String<br>
+        ├── checkIn:      String<br>
+        └── checkOut:     String<br>
+</div>
+
+<div class="note">
+  <strong>ملاحظة:</strong> يمكن فتح هذا الملف مباشرة في <strong>Microsoft Word</strong> عن طريق الضغط عليه بزر الفأرة الأيمن &rarr; فتح باستخدام Word، ثم حفظه كـ <code>.docx</code>.
+</div>
+
+</body>
+</html>

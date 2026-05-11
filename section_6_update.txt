@@ -1,0 +1,106 @@
+# 6- מבנה, ארכטיקטורה של הפרויקט (هيكل المشروع)
+
+**1. הסבר תמציתי על הפעולות העיקריות ביישום (شرح موجز للعمليات الرئيسية في التطبيق مع أمثلة كود):**
+يحتوي التطبيق على عدة عمليات رئيسية تتوزع بين إدارة طلبات العمل، وتسجيل الدخول.
+
+**أ. ניהול בקשות עבודה (إدارة طلبات العمل):**
+تتم إدارة طلبات العمال من خلال الكلاس `WorkRequestManager` والذي بُني بنمط **Singleton** للحفاظ على نفس البيانات في الذاكرة وعدم تكرارها.
+
+```dart
+class WorkRequestManager {
+  static final WorkRequestManager _instance = WorkRequestManager._internal();
+  factory WorkRequestManager() => _instance;
+  WorkRequestManager._internal();
+
+  final List<WorkRequest> _requests = [];
+
+  // عملية إضافة طلب عمل جديد
+  void addRequest(WorkRequest request) {
+    _requests.add(request);
+  }
+
+  // عملية تغيير حالة الطلب (مقبول / مرفوض)
+  void updateRequestStatus(String id, WorkRequestStatus status) {
+    final index = _requests.indexWhere((r) => r.id == id);
+    if (index != -1) {
+      _requests[index].status = status;
+    }
+  }
+}
+```
+
+**ب. תהליך התחברות (عملية تسجيل الدخول عبر وسائل التواصل):**
+بعد نجاح المصادقة، يتم التحقق مما إذا كان المستخدم مسجلاً في قاعدة بيانات `Firestore`، ويتم حفظ بياناته.
+```dart
+Future<void> _handleSocialLoginSuccess(UserCredential userCredential) async {
+  final user = userCredential.user!;
+  final userId = user.uid;
+  
+  // التحقق من وجود المستخدم في قاعدة البيانات
+  final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+  
+  if (!userDoc.exists) {
+    // إنشاء سجل جديد للمستخدم
+    await FirebaseFirestore.instance.collection('users').doc(userId).set({
+      'name': user.displayName ?? 'User',
+      'email': user.email ?? '',
+    });
+  }
+}
+```
+
+**2. תיאור ארכיטקטורה - תרשים מחלקות (وصف المعمارية ومخطط الكلاسات):**
+بنية التطبيق تعتمد بشكل أساسي على البرمجة كائنية التوجه (OOP).
+
+*مخطط هرمي للوراثة والاحتواء (עצי מחלקות והורשה/הכלה):*
+- `ManagerDashboard` *(يرث من - הורשה)* `StatefulWidget`
+- `LoginPage` *(يرث من - הורשה)* `StatefulWidget`
+- `WorkRequestManager` *(يحتوي على - הכלה/Aggregation)* مجموعة من `WorkRequest`
+- `WorkRequest` *(يحتوي على - הכלה)* `WorkRequestStatus` (Enum)
+
+*ترسيم UML:*
+```mermaid
+classDiagram
+    class WorkRequestStatus {
+        <<enumeration>>
+        pending, approved, rejected
+    }
+    class WorkRequest {
+        +String id
+        +String employeeName
+        +Map~String, bool~ workSchedule
+        +WorkRequestStatus status
+    }
+    class WorkRequestManager {
+        <<Singleton>>
+        -List~WorkRequest~ _requests
+        +addRequest()
+        +updateRequestStatus()
+    }
+    class ManagerDashboard {
+        <<StatefulWidget>>
+    }
+    WorkRequest "*" -- "1" WorkRequestStatus : has
+    WorkRequestManager "1" o-- "*" WorkRequest : manages
+    ManagerDashboard ..> WorkRequestManager : uses
+```
+
+**3. ארגון הקבצים ותרשימי זרימה (تنظيم الملفات والمخطط الانسيابي):**
+
+*تنظيم الملفات (ארגון הקבצים):*
+- `lib/views/`: يحتوي على جميع واجهات المستخدم (الشاشات).
+  - `LoginScreen.dart`: شاشة تسجيل الدخول.
+  - `HomePageScreen.dart`: الشاشة الرئيسية للعمال.
+  - `Manager/Dashboard.dart`: لوحة التحكم الخاصة بالمدير.
+- `lib/Utils/`: يحتوي على ملفات مساعدة مثل `utils.dart` التي تضم دوال عامة للاستخدام المتكرر.
+
+*مخطط انسيابي مبسط لسير عمل التطبيق (תרשים זרימה):*
+```text
+[Start] --> [Login Screen]
+  |-- (If Social Login Successful) --> [Check Firestore Database]
+  |---- (If New User) --> [Create User Document] --> [Navigate to Home Page]
+  |---- (If Existing User) --> [Navigate to Home Page]
+  
+  [Home Page] --> (Worker chooses action) --> [Time Tracking Page / Weekly Schedule]
+  [Manager Dashboard] --> (Views WorkRequests) --> [Approve / Reject Request]
+```
